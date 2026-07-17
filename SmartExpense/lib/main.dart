@@ -5,6 +5,7 @@ import 'providers/transaction_provider.dart';
 import 'providers/currency_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const SmartExpenseApp());
@@ -28,7 +29,7 @@ class SmartExpenseApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Smart Expense Tracker',
         theme: AppTheme.lightTheme,
-        home: const DashboardScreen(),
+        home: const HomeScreen(),
       ),
     );
   }
