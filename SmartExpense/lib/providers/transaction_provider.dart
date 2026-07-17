@@ -103,6 +103,25 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateTransaction(String id, TransactionModel updatedTransaction,) async {
+    final index =
+    _transactions.indexWhere((e) => e.id == id);
+    
+    if (index == -1) return;
+    
+    _transactions[index] = updatedTransaction;
+    
+    await saveTransactions();
+    
+    notifyListeners();}
+  
+  Future<void> deleteTransaction(String id) async {
+    _transactions.removeWhere((e) => e.id == id);
+    
+    await saveTransactions();
+    
+    notifyListeners();}
+
   Future<void> saveTransactions() async {
     final prefs = await SharedPreferences.getInstance();
 
