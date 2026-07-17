@@ -1,33 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 
 import '../models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
 
-class AddTransactionScreen extends StatefulWidget {
-  const AddTransactionScreen({super.key});
+class EditTransactionScreen extends StatefulWidget {
+  final TransactionModel transaction;
+
+  const EditTransactionScreen({
+    super.key,
+    required this.transaction,
+  });
 
   @override
-  State<AddTransactionScreen> createState() =>
-      _AddTransactionScreenState();
+  State<EditTransactionScreen> createState() =>
+      _EditTransactionScreenState();
 }
 
-class _AddTransactionScreenState
-    extends State<AddTransactionScreen> {
+class _EditTransactionScreenState
+    extends State<EditTransactionScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController amountController =
-      TextEditingController();
+  late TextEditingController amountController;
+  late TextEditingController noteController;
 
-  final TextEditingController noteController =
-      TextEditingController();
-
-  String selectedCategory = "Food";
-
-  String selectedType = "Expense";
-
-  DateTime selectedDate = DateTime.now();
+  late String selectedCategory;
+  late String selectedType;
+  late DateTime selectedDate;
 
   final List<String> categories = [
     "Food",
@@ -37,8 +36,32 @@ class _AddTransactionScreenState
     "Education",
     "Health",
     "Salary",
-    "Other"
+    "Other",
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    amountController = TextEditingController(
+      text: widget.transaction.amount.toString(),
+    );
+
+    noteController = TextEditingController(
+      text: widget.transaction.note,
+    );
+
+    selectedCategory = widget.transaction.category;
+    selectedType = widget.transaction.type;
+    selectedDate = widget.transaction.date;
+  }
+
+  @override
+  void dispose() {
+    amountController.dispose();
+    noteController.dispose();
+    super.dispose();
+  }
 
   Future<void> pickDate() async {
     final picked = await showDatePicker(
@@ -55,11 +78,39 @@ class _AddTransactionScreenState
     }
   }
 
+  Future<void> saveTransaction() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final updatedTransaction = TransactionModel(
+      id: widget.transaction.id,
+      amount: double.parse(amountController.text),
+      category: selectedCategory,
+      type: selectedType,
+      date: selectedDate,
+      note: noteController.text,
+    );
+
+    await context.read<TransactionProvider>().updateTransaction(
+          widget.transaction.id,
+          updatedTransaction,
+        );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Transaction updated successfully"),
+      ),
+    );
+
+    Navigator.pop(context, true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add Transaction"),
+        title: const Text("Edit Transaction"),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -67,7 +118,6 @@ class _AddTransactionScreenState
           key: _formKey,
           child: Column(
             children: [
-
               TextFormField(
                 controller: amountController,
                 keyboardType: TextInputType.number,
@@ -80,11 +130,13 @@ class _AddTransactionScreenState
                     return "Amount is required";
                   }
 
-                  if (double.tryParse(value) == null) {
+                  final amount = double.tryParse(value);
+
+                  if (amount == null) {
                     return "Invalid amount";
                   }
 
-                  if (double.parse(value) <= 0) {
+                  if (amount <= 0) {
                     return "Amount must be greater than 0";
                   }
 
@@ -132,7 +184,6 @@ class _AddTransactionScreenState
 
               Row(
                 children: [
-
                   Expanded(
                     child: RadioListTile<String>(
                       title: const Text("Income"),
@@ -145,7 +196,6 @@ class _AddTransactionScreenState
                       },
                     ),
                   ),
-
                   Expanded(
                     child: RadioListTile<String>(
                       title: const Text("Expense"),
@@ -178,53 +228,9 @@ class _AddTransactionScreenState
                 width: double.infinity,
                 height: 55,
                 child: FilledButton.icon(
-                //   onPressed: () {
-
-                //     if (_formKey.currentState!.validate()) {
-
-                //       ScaffoldMessenger.of(context).showSnackBar(
-                //         const SnackBar(
-                //           content: Text(
-                //             "Next Step: Save Transaction",
-                //           ),
-                //         ),
-                //       );
-
-                //     }
-                    
-                    onPressed: () async {
-                        if (!_formKey.currentState!.validate()) return;
-                        
-                        final transaction = TransactionModel(
-                            id: const Uuid().v4(),
-                            amount: double.parse(amountController.text),
-                            category: selectedCategory,
-                            type: selectedType,
-                            date: selectedDate,
-                            note: noteController.text,
-                        );
-                        
-                        await context.read<TransactionProvider>().addTransaction(transaction);
-                        
-                        if (!context.mounted) return;
-                        
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text("Transaction saved successfully"),
-                            ),
-                        );
-                        
-                        amountController.clear();
-                        noteController.clear();
-                        
-                        setState(() {
-                            selectedCategory = "Food";
-                            selectedType = "Expense";
-                            selectedDate = DateTime.now();
-                        });
-                    },
+                  onPressed: saveTransaction,
                   icon: const Icon(Icons.save),
-                  label: const Text("Save Transaction"),
+                  label: const Text("Save Changes"),
                 ),
               ),
             ],
