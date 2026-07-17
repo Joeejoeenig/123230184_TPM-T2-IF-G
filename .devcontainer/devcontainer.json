@@ -1,0 +1,16 @@
+{
+  "name": "Flutter Development",
+
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Dart-Code.flutter",
+        "Dart-Code.dart-code"
+      ]
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/postCreate.sh"
+}
